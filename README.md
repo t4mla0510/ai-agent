@@ -34,5 +34,6 @@ The agent communicates with the `gemini-2.5-flash` model through the `google-gen
    ```
    Use `--verbose` to see details of each function call.
 
-
+## Acknowledgement
+This project was adapted from the AI Agent course on [Boot.dev](https://boot.dev).
 
