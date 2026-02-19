@@ -54,6 +54,8 @@ for i in range(20):
         for candidate in response.candidates:
             messages.append(candidate.content)
 
+        function_responses = []
+
         if response.function_calls:
             for function_call_part in response.function_calls:
                 function_call_result = call_function(function_call_part, verbose=verbose)
@@ -66,13 +68,15 @@ for i in range(20):
                 
                 if verbose:
                     print(f"-> {function_call_result.parts[0].function_response.response}")
+
+                function_responses.extend(function_call_result.parts)
                 
-                messages.append(
-                    types.Content(
-                        role="user",
-                        parts=[function_call_result.parts[0]]
-                    )
+            messages.append(
+                types.Content(
+                    role="user",
+                    parts=function_responses
                 )
+            )
         elif response.text:
             print("Final response:")
             print(response.text)
@@ -80,4 +84,4 @@ for i in range(20):
         
     except Exception as e:
         print(f"Error during loop iteration {i}: {e}")
-        break
+        exit(1)

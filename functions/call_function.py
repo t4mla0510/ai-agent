@@ -4,41 +4,42 @@ from .run_python_file import run_python_file
 from .write_file import write_file
 from google.genai import types
 
-def call_function(function_call_part, verbose=False):
+def call_function(function_call, verbose=False):
     if verbose:
-        print(f"Calling function: {function_call_part.name}({function_call_part.args})")
+        print(f"Calling function: {function_call.name}({function_call.args})")
     else:
-        print(f" - Calling function: {function_call_part.name}")
+        print(f" - Calling function: {function_call.name}")
     
-    args_dict = dict(function_call_part.args) if function_call_part.args else {}
+    function_map = {
+        "get_file_content": get_file_content,
+        "get_files_info": get_files_info,
+        "run_python_file": run_python_file,
+        "write_file": write_file
+    }
+
+    function_name = function_call.name or ""
+    if function_name not in function_map:
+        return types.Content(
+            role="tool",
+            parts=[
+                types.Part.from_function_response(
+                    name=function_name,
+                    response={"error": f"Unknown function: {function_name}"}
+                )
+            ]
+        )
+    
+    args_dict = dict(function_call.args) if function_call.args else {}
     args_dict["working_directory"] = "./calculator"
 
-    match function_call_part.name:
-        case "get_file_content":
-            result = get_file_content(**args_dict)
-        case "get_files_info":
-            result = get_files_info(**args_dict)
-        case "run_python_file":
-            result = run_python_file(**args_dict)
-        case "write_file":
-            result = write_file(**args_dict)
-        case _:
-            return types.Content(
-                role="tool",
-                parts=[
-                    types.Part.from_function_response(
-                        name=function_call_part.name,
-                        response={"error": f"Unknown function: {function_call_part.name}"},
-                    )
-                ],
-            )
+    function_result = function_map[function_name](**args_dict)
     
     return types.Content(
         role="tool",
         parts=[
             types.Part.from_function_response(
-                name=function_call_part.name,
-                response={"result": result},
+                name=function_name,
+                response={"result": function_result},
             )
         ],
     )
